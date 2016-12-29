@@ -19,6 +19,7 @@ set(COMPILE_FLAGS "-fno-rtti -fPIC -std=c++14")
 set(LINK_FLAGS "")
 
 if (TEMPLATE_TOOLS_USE_LIBCXX)
+    list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++)
     list(APPEND COMPILE_FLAGS -stdlib=libc++)
     list(APPEND LINK_FLAGS -stdlib=libc++)
 endif()
