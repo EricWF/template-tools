@@ -157,7 +157,7 @@ function require(module_name) {}
 
 #pragma clang diagnostic pop
 
-#include "class_parser.h"
+#include "template_parser.h"
 
 using namespace clang;
 using namespace clang::ast_matchers;

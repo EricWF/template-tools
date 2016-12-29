@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# template-count is a Clang wrapper that invokes Clang with the template_parser
+# clang builtin.
+# Example: template-count -std=c++11 test.cpp
+
+LIB_PATH=@LIBRARY_PREFIX@/libtemplate_parser.@SO_SUFFIX@
+@CMAKE_CXX_COMPILER@ -Xclang -load -Xclang $LIB_PATH -Xclang -plugin \
+        -Xclang v8toolkit-generate-bindings \
+        -fsyntax-only @STDLIB_FLAG@ \
+        "$@"

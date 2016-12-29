@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-LIB_PATH=@LIBRARY_PREFIX@/libclass_parser.@SO_SUFFIX@
-export LD_LIBRARY_PATH=${LLVM_LIBRARY_DIR}
-@CMAKE_CXX_COMPILER@ -Xclang -load -Xclang $LIB_PATH -Xclang -plugin \
-        -Xclang v8toolkit-generate-bindings \
-        -fsyntax-only -stdlib=libc++ \
-        "$@"
