@@ -2,3 +2,7 @@
 macro(split_list listname)
   string(REPLACE ";" " " ${listname} "${${listname}}")
 endmacro()
+
+macro(make_list listname)
+  string(REPLACE " " ";" ${listname} "${${listname}}")
+endmacro()

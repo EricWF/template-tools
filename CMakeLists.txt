@@ -3,10 +3,6 @@ project(class_parser_proj CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Find the LLVM and Clang CMake modules and include them.
-include(HandleLLVMConfig)
-configure_out_of_tree_llvm()
-
 ###############################################################################
 # Configuration options
 SET(TEMPLATE_TOOLS_USE_LIBCXX "Use libc++ when building and using the plugin" OFF)
@@ -14,6 +10,7 @@ SET(TEMPLATE_TOOLS_USE_LIBCXX "Use libc++ when building and using the plugin" OF
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 
 ###############################################################################
 # Setup compile flags
@@ -28,6 +25,14 @@ endif()
 
 split_list(COMPILE_FLAGS)
 split_list(LINK_FLAGS)
+###############################################################################
+# Configure deps
+
+# Find the LLVM and Clang CMake modules and include them.
+include(HandleLLVMConfig)
+configure_out_of_tree_llvm()
+
+add_subdirectory(submodules/fmt)
 ###############################################################################
 # template_parser - A Clang plugin for counting templates
 
@@ -46,7 +51,6 @@ target_link_libraries(template_parser
         clangASTMatchers clangSema clangAnalysis clangEdit clangSerialization
         LLVMSupport)
 
-find_package(fmt REQUIRED)
 target_link_libraries(template_parser fmt)
 
 ###############################################################################
