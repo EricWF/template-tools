@@ -6,6 +6,6 @@
 
 LIB_PATH=@LIBRARY_PREFIX@/libtemplate_parser.@SO_SUFFIX@
 @CMAKE_CXX_COMPILER@ -Xclang -load -Xclang $LIB_PATH -Xclang -plugin \
-        -Xclang v8toolkit-generate-bindings \
+        -Xclang template-tool-count-templates \
         -fsyntax-only @STDLIB_FLAG@ \
         "$@"

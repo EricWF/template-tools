@@ -3679,4 +3679,4 @@ protected:
 }
 
 static FrontendPluginRegistry::Add<PrintFunctionNamesAction>
-    X("v8toolkit-generate-bindings", "generate v8toolkit bindings");
+    X("template-tool-count-templates", "print the template instantiation count");
