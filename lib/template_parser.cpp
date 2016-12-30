@@ -36,7 +36,6 @@
 #define TEMPLATED_CLASS_PRINT_THRESHOLD 10
 #define TEMPLATED_FUNCTION_PRINT_THRESHOLD 100
 
-
 using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::driver;
@@ -57,6 +56,7 @@ std::string get_canonical_name_for_decl(const TypeDecl *decl) {
 
 int print_logging = 1;
 
+struct ClassTemplate;
 vector<std::unique_ptr<ClassTemplate>> class_templates;
 struct ClassTemplate {
   std::string name;
@@ -81,7 +81,6 @@ struct ClassTemplate {
   }
 };
 
-
 class ClassHandler : public MatchFinder::MatchCallback {
 private:
   CompilerInstance &ci;
@@ -90,7 +89,6 @@ private:
 public:
   ClassHandler(CompilerInstance &CI)
       : ci(CI), source_manager(CI.getSourceManager()) {}
-
 
   /**
          * This runs per-match from MyASTConsumer, but always on the same
@@ -106,7 +104,6 @@ public:
            << endl;
     }
 
-
     if (const ClassTemplateSpecializationDecl *klass =
             Result.Nodes.getNodeAs<clang::ClassTemplateSpecializationDecl>(
                 "class")) {
@@ -117,7 +114,7 @@ public:
       if (std::regex_search(class_name,
                             std::regex("^(class|struct)\\s+v8toolkit"))) {
         //		if (std::regex_search(class_name,
-        //std::regex("remove_reference"))) {
+        // std::regex("remove_reference"))) {
         print_logging = true;
         cerr << fmt::format("Got class {}", class_name) << endl;
       }
@@ -145,8 +142,6 @@ public:
 
       ClassTemplate::get_or_create(tmpl).instantiated();
     }
-
-
   }
 };
 
@@ -211,19 +206,6 @@ public:
     skipped = 0;
     total = 0;
     insts.clear();
-
-    for (auto &warning : warnings) {
-      cerr << warning << endl;
-    }
-
-    if (!errors.empty()) {
-      cerr << "Errors detected:" << endl;
-      for (auto &error : errors) {
-        cerr << error << endl;
-      }
-      llvm::report_fatal_error("Errors detected in source data");
-      exit(1);
-    }
   }
 
 protected:
