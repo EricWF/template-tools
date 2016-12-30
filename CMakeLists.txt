@@ -65,8 +65,6 @@ if (NOT PYTHONINTERP_FOUND)
   message(FATAL_ERROR "Failed to find python interpreter.")
 endif()
 
-add_subdirectory(deps/fmt)
-
 ###############################################################################
 # Configure project
 add_subdirectory(lib)

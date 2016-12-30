@@ -1,10 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <regex>
-#include <cassert>
-
-#include "fmt/ostream.h"
+#include "template_parser.h"
 
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/AST/AST.h"
@@ -16,7 +10,11 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "template_parser.h"
+#include <iostream>
+#include <vector>
+#include <string>
+#include <regex>
+#include <cassert>
 
 //////////////////////////////
 // CUSTOMIZE THESE VARIABLES
@@ -55,7 +53,6 @@ struct ClassTemplate {
 
   ClassTemplate(const ClassTemplateDecl *decl) : decl(decl) {
     name = decl->getQualifiedNameAsString();
-    // cerr << fmt::format("Created class template for {}", name) << endl;
   }
 
   void instantiated() { instantiations++; }
@@ -106,7 +103,7 @@ public:
         //		if (std::regex_search(class_name,
         // std::regex("remove_reference"))) {
         print_logging = true;
-        cerr << fmt::format("Got class {}", class_name) << endl;
+        cerr << "Got class " << class_name << endl;
       }
 
 #ifdef TEMPLATE_FILTER_STD
@@ -165,8 +162,8 @@ public:
   PrintFunctionNamesAction() {}
 
   // This is called when all parsing is done
-  void EndSourceFileAction() {
-    cerr << fmt::format("Class template instantiations") << endl;
+  void EndSourceFileAction() override {
+    cerr << "Class template instantiations" << endl;
     vector<pair<string, int>> insts;
     for (auto &class_template : class_templates) {
       insts.push_back({class_template->name, class_template->instantiations});
@@ -176,10 +173,8 @@ public:
     int skipped = 0;
     int total = 0;
     cerr << endl
-         << fmt::format(
-                "Class templates with more than {} or more instantiations:",
-                TEMPLATED_CLASS_PRINT_THRESHOLD)
-         << endl;
+         << "Class templates with more than " << TEMPLATED_CLASS_PRINT_THRESHOLD
+         << " or more instantiations:" << endl;
     for (auto &pair : insts) {
       total += pair.second;
       if (pair.second < TEMPLATED_CLASS_PRINT_THRESHOLD) {
@@ -201,12 +196,12 @@ public:
 protected:
   // The value returned here is used internally to run checks against
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef) {
+                                                 llvm::StringRef) override {
     return llvm::make_unique<MyASTConsumer>(CI);
   }
 
   bool ParseArgs(const CompilerInstance &CI,
-                 const std::vector<std::string> &args) {
+                 const std::vector<std::string> &args) override {
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
       llvm::errs() << "PrintFunctionNames arg = " << args[i] << "\n";
 

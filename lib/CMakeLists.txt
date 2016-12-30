@@ -14,4 +14,3 @@ target_link_libraries(template_parser
     clangBasic clangFrontend clangAST clangASTMatchers
     LLVMSupport)
 
-target_link_libraries(template_parser fmt)
