@@ -16,20 +16,13 @@
 #include <regex>
 #include <cassert>
 
-//////////////////////////////
-// CUSTOMIZE THESE VARIABLES
-//////////////////////////////
-
-// if this is defined, only template info will be printed
-//#define TEMPLATE_FILTER_STD
-static int TemplatePrintThreshold = 10;
-static int TEMPLATED_FUNCTION_PRINT_THRESHOLD = 100;
-
 using namespace clang;
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang::comments;
 using namespace std;
+
+static int TemplatePrintThreshold = 10;
 
 int matched_classes_returned = 0;
 
@@ -41,8 +34,6 @@ std::string get_canonical_name_for_decl(const TypeDecl *decl) {
   }
   return decl->getTypeForDecl()->getCanonicalTypeInternal().getAsString();
 }
-
-int print_logging = 1;
 
 struct ClassTemplate;
 vector<std::unique_ptr<ClassTemplate>> class_templates;
@@ -106,26 +97,11 @@ public:
         cerr << "Got class " << class_name << endl;
       }
 
-#ifdef TEMPLATE_FILTER_STD
-      if (std::regex_search(class_name, std::regex("^std::"))) {
-        if (print_logging)
-          cerr << "Filtering out because in std::" << endl;
-        return;
-      }
-#endif
-
       auto tmpl = klass->getSpecializedTemplate();
       if (print_logging) {
         cerr << "got specialized template " << tmpl->getQualifiedNameAsString()
              << endl;
       }
-
-#ifdef TEMPLATE_FILTER_STD
-      if (std::regex_search(tmpl->getQualifiedNameAsString(),
-                            std::regex("^std::"))) {
-        return;
-      }
-#endif
 
       ClassTemplate::get_or_create(tmpl).instantiated();
     }
