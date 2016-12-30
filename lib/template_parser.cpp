@@ -8,12 +8,15 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <iostream>
 #include <vector>
 #include <string>
 #include <regex>
+#include <unordered_map>
+#include <unordered_set>
 #include <cassert>
 
 using namespace clang;
@@ -24,86 +27,50 @@ using namespace std;
 
 static int TemplatePrintThreshold = 10;
 
-int matched_classes_returned = 0;
+using TemplateUnion =
+    llvm::PointerUnion<ClassTemplateDecl *,
+                       ClassTemplatePartialSpecializationDecl *>;
+
+namespace std {
+template <class T, class U>
+struct hash<::llvm::PointerUnion<T, U>> {
+  using value_type = ::llvm::PointerUnion<T, U>;
+  size_t operator()(value_type const &VT) const {
+    return llvm::DenseMapInfo<value_type>::getHashValue(VT);
+  }
+};
+}
 
 namespace {
 
-std::string get_canonical_name_for_decl(const TypeDecl *decl) {
-  if (decl == nullptr) {
-    llvm::report_fatal_error("null type decl to get_canonical_name_for_decl");
-  }
-  return decl->getTypeForDecl()->getCanonicalTypeInternal().getAsString();
-}
-
-struct ClassTemplate;
-vector<std::unique_ptr<ClassTemplate>> class_templates;
-struct ClassTemplate {
+struct InstantiationInfo {
+  InstantiationInfo() : name(), instantiations(0) {}
   std::string name;
-  const ClassTemplateDecl *decl;
   int instantiations = 0;
-
-  ClassTemplate(const ClassTemplateDecl *decl) : decl(decl) {
-    name = decl->getQualifiedNameAsString();
-  }
-
-  void instantiated() { instantiations++; }
-
-  static ClassTemplate &get_or_create(const ClassTemplateDecl *decl) {
-    for (auto &tmpl : class_templates) {
-      if (tmpl->decl == decl) {
-        return *tmpl;
-      }
-    }
-    class_templates.emplace_back(make_unique<ClassTemplate>(decl));
-    return *class_templates.back();
-  }
 };
 
-class ClassHandler : public MatchFinder::MatchCallback {
+using TemplateInfoMap = std::unordered_map<TemplateUnion, InstantiationInfo>;
+
+class TemplateMatchCallback : public MatchFinder::MatchCallback {
 private:
   CompilerInstance &ci;
   SourceManager &source_manager;
+  TemplateInfoMap &foundTemplates;
 
 public:
-  ClassHandler(CompilerInstance &CI)
-      : ci(CI), source_manager(CI.getSourceManager()) {}
+  TemplateMatchCallback(CompilerInstance &CI, TemplateInfoMap &M)
+      : ci(CI), source_manager(CI.getSourceManager()), foundTemplates(M) {}
 
-  /**
-         * This runs per-match from MyASTConsumer, but always on the same
-   * ClassHandler object
-         */
   virtual void run(const MatchFinder::MatchResult &Result) override {
-
-    matched_classes_returned++;
-
-    if (matched_classes_returned % 10000 == 0) {
-      cerr << endl
-           << "### MATCHER RESULT " << matched_classes_returned << " ###"
-           << endl;
-    }
-
     if (const ClassTemplateSpecializationDecl *klass =
-            Result.Nodes.getNodeAs<clang::ClassTemplateSpecializationDecl>(
-                "class")) {
-      auto class_name = get_canonical_name_for_decl(klass);
-
-      bool print_logging = false;
-
-      if (std::regex_search(class_name,
-                            std::regex("^(class|struct)\\s+v8toolkit"))) {
-        //		if (std::regex_search(class_name,
-        // std::regex("remove_reference"))) {
-        print_logging = true;
-        cerr << "Got class " << class_name << endl;
-      }
-
-      auto tmpl = klass->getSpecializedTemplate();
-      if (print_logging) {
-        cerr << "got specialized template " << tmpl->getQualifiedNameAsString()
-             << endl;
-      }
-
-      ClassTemplate::get_or_create(tmpl).instantiated();
+            Result.Nodes.getNodeAs<ClassTemplateSpecializationDecl>("class")) {
+      auto it_pair = foundTemplates.emplace(klass->getInstantiatedFrom(),
+                                            InstantiationInfo{});
+      auto it = it_pair.first;
+      if (it_pair.second)
+        it->second.name =
+            klass->getSpecializedTemplate()->getQualifiedNameAsString();
+      it->second.instantiations++;
     }
   }
 };
@@ -113,7 +80,8 @@ public:
 // the AST.
 class MyASTConsumer : public ASTConsumer {
 public:
-  MyASTConsumer(CompilerInstance &CI) : HandlerForClass(CI) {
+  MyASTConsumer(CompilerInstance &CI, TemplateInfoMap &M)
+      : HandlerForClass(CI, M) {
     Matcher.addMatcher(
         decl(anyOf(classTemplateSpecializationDecl().bind("class"),
                    cxxMethodDecl().bind("method"))),
@@ -126,7 +94,7 @@ public:
   }
 
 private:
-  ClassHandler HandlerForClass;
+  TemplateMatchCallback HandlerForClass;
   MatchFinder Matcher;
 };
 
@@ -141,11 +109,12 @@ public:
   void EndSourceFileAction() override {
     cerr << "Class template instantiations" << endl;
     vector<pair<string, int>> insts;
-    for (auto &class_template : class_templates) {
-      insts.push_back({class_template->name, class_template->instantiations});
-    }
+    for (auto &KV : foundTemplates)
+      insts.push_back({KV.second.name, KV.second.instantiations});
     std::sort(insts.begin(), insts.end(),
               [](auto &a, auto &b) { return a.second < b.second; });
+
+    // assert(insts == insts_other);
     int skipped = 0;
     int total = 0;
     cerr << endl
@@ -164,8 +133,6 @@ public:
     cerr << "Skipped " << skipped << " entries because they had fewer than "
          << TemplatePrintThreshold << " instantiations" << endl;
     cerr << "Total of " << total << " instantiations" << endl;
-    skipped = 0;
-    total = 0;
     insts.clear();
   }
 
@@ -173,7 +140,7 @@ protected:
   // The value returned here is used internally to run checks against
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef) override {
-    return llvm::make_unique<MyASTConsumer>(CI);
+    return llvm::make_unique<MyASTConsumer>(CI, foundTemplates);
   }
 
   bool ParseArgs(const CompilerInstance &CI,
@@ -191,12 +158,16 @@ protected:
     }
     return true;
   }
+
   void PrintHelp(llvm::raw_ostream &ros) {
     ros << "Help for PrintFunctionNames plugin goes here\n";
   }
+
+private:
+  TemplateInfoMap foundTemplates;
 };
-}
+
+} // end namespace
 
 static FrontendPluginRegistry::Add<PrintFunctionNamesAction>
-    X("template-tools",
-      "print the template instantiation count");
+    X("template-tools", "print the template instantiation count");
