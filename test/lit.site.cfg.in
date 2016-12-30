@@ -1,0 +1,9 @@
+@AUTO_GEN_COMMENT@
+config.cxx                      = "@CMAKE_CXX_COMPILER@"
+config.project_obj_root         = "@CMAKE_BINARY_DIR@"
+config.source_root              = "@MAIN_SOURCE_DIR@"
+config.build_root               = "@CMAKE_BINARY_DIR@"
+
+# Let the main config do the real work.
+config.loaded_site_config = True
+lit_config.load_config(config, "@MAIN_SOURCE_DIR@/test/lit.cfg")
