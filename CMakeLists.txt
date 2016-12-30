@@ -21,7 +21,7 @@ set(TOOLS_DIR "${MAIN_SOURCE_DIR}/tools")
 # Setup compile flags
 include(HandleFlags)
 set(COMPILE_FLAGS "-fno-rtti -std=c++14")
-set(LINK_FLAGS "")
+set(LINK_FLAGS "-Wl,-z,defs")
 
 # Add flags needed by deps/fmt to CMAKE_CXX_FLAGS
 if (TEMPLATE_TOOLS_USE_LIBCXX)

@@ -12,8 +12,7 @@ set_target_properties(template_parser
   )
 
 target_link_libraries(template_parser
-        clangBasic clangFrontend clangDriver clangLex clangParse clangAST
-        clangASTMatchers clangSema clangAnalysis clangEdit clangSerialization
+        clangBasic clangFrontend clangAST clangASTMatchers
         LLVMSupport)
 
 target_link_libraries(template_parser fmt)
