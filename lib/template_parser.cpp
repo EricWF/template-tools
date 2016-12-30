@@ -2608,7 +2608,7 @@ public:
   }
 
 private:
-  ClassHandler HandlerForClass;
+  em
   MatchFinder Matcher;
 };
 

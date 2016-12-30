@@ -36,7 +36,7 @@ split_list(LINK_FLAGS)
 include(HandleLLVMConfig)
 configure_out_of_tree_llvm()
 
-add_subdirectory(submodules/fmt)
+add_subdirectory(deps/fmt)
 
 ###############################################################################
 # Configure project
