@@ -22,8 +22,8 @@
 
 // if this is defined, only template info will be printed
 //#define TEMPLATE_FILTER_STD
-#define TEMPLATED_CLASS_PRINT_THRESHOLD 10
-#define TEMPLATED_FUNCTION_PRINT_THRESHOLD 100
+static int TemplatePrintThreshold = 10;
+static int TEMPLATED_FUNCTION_PRINT_THRESHOLD = 100;
 
 using namespace clang;
 using namespace clang::ast_matchers;
@@ -173,11 +173,11 @@ public:
     int skipped = 0;
     int total = 0;
     cerr << endl
-         << "Class templates with more than " << TEMPLATED_CLASS_PRINT_THRESHOLD
+         << "Class templates with " << TemplatePrintThreshold
          << " or more instantiations:" << endl;
     for (auto &pair : insts) {
       total += pair.second;
-      if (pair.second < TEMPLATED_CLASS_PRINT_THRESHOLD) {
+      if (pair.second < TemplatePrintThreshold) {
         skipped++;
         continue;
       }
@@ -186,7 +186,7 @@ public:
     }
     cerr << endl;
     cerr << "Skipped " << skipped << " entries because they had fewer than "
-         << TEMPLATED_CLASS_PRINT_THRESHOLD << " instantiations" << endl;
+         << TemplatePrintThreshold << " instantiations" << endl;
     cerr << "Total of " << total << " instantiations" << endl;
     skipped = 0;
     total = 0;
@@ -202,21 +202,17 @@ protected:
 
   bool ParseArgs(const CompilerInstance &CI,
                  const std::vector<std::string> &args) override {
-    for (unsigned i = 0, e = args.size(); i != e; ++i) {
-      llvm::errs() << "PrintFunctionNames arg = " << args[i] << "\n";
-
-      // Example error handling.
-      if (args[i] == "-an-error") {
-        DiagnosticsEngine &D = CI.getDiagnostics();
-        unsigned DiagID = D.getCustomDiagID(DiagnosticsEngine::Error,
-                                            "invalid argument '%0'");
-        D.Report(DiagID) << args[i];
-        return false;
+    for (StringRef Arg : args) {
+      if (Arg.startswith("-min_threshold=")) {
+        StringRef Val = Arg.substr(strlen("-min_threshold="));
+        if (Val.getAsInteger(0, TemplatePrintThreshold)) {
+          llvm::errs() << "Failed to parse option: " << Arg;
+          return false;
+        }
       }
+      if (Arg == "help")
+        PrintHelp(llvm::errs());
     }
-    if (args.size() && args[0] == "help")
-      PrintHelp(llvm::errs());
-
     return true;
   }
   void PrintHelp(llvm::raw_ostream &ros) {
@@ -226,5 +222,5 @@ protected:
 }
 
 static FrontendPluginRegistry::Add<PrintFunctionNamesAction>
-    X("template-tool-count-templates",
+    X("template-tools",
       "print the template instantiation count");

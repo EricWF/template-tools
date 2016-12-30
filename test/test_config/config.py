@@ -83,9 +83,11 @@ class Configuration(object):
         sub = self.config.substitutions
         sub.append(('%cxx', ' '.join([self.cxx, '-stdlib=libc++'])))
         plugin_flags = ['-Xclang', '-load', '-Xclang', self.plugin, '-Xclang',
-                        '-plugin', '-Xclang', 'template-tool-count-templates']
+                        '-plugin', '-Xclang', 'template-tools']
         plugin_flags += ['-fsyntax-only']
         sub.append(('%plugin_flags', ' '.join(plugin_flags)))
+        plugin_arg_str = '-Xclang -plugin-arg-template-tools -Xclang '
+        sub.append(('%plugin_arg=', plugin_arg_str))
 
     def get_test_format(self):
         return lit.formats.ShTest(True)
