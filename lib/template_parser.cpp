@@ -1,10 +1,6 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
 #include <vector>
 #include <string>
-#include <set>
 #include <regex>
 #include <cassert>
 
@@ -18,11 +14,6 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Tooling.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Lex/Lexer.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/AST/Comment.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "template_parser.h"
@@ -38,7 +29,6 @@
 
 using namespace clang;
 using namespace clang::ast_matchers;
-using namespace clang::driver;
 using namespace clang::tooling;
 using namespace clang::comments;
 using namespace std;
