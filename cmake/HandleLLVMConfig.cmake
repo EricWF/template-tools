@@ -70,6 +70,6 @@ macro(configure_out_of_tree_llvm)
   endif()
   include(LLVMConfig)
   include(ClangConfig)
-#include_directories(${LLVM_INCLUDE_DIR})
+  include_directories(${LLVM_INCLUDE_DIR})
 endmacro(configure_out_of_tree_llvm)
 

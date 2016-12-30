@@ -25,29 +25,29 @@ set(LINK_FLAGS "-Wl,-z,defs")
 
 # Add flags needed by deps/fmt to CMAKE_CXX_FLAGS
 if (TEMPLATE_TOOLS_USE_LIBCXX)
-    list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++)
+  list(APPEND CMAKE_CXX_FLAGS -stdlib=libc++)
 endif()
 list(APPEND CMAKE_CXX_FLAGS -fPIC)
 
 # Ensure assertions are en
 if (TEMPLATE_TOOLS_ENABLE_ASSERTIONS)
-    add_definitions( -D_DEBUG )
-    # On non-Debug builds cmake automatically defines NDEBUG, so we
-    # explicitly undefine it:
-    if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
-        add_definitions( -UNDEBUG )
-        # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
-        foreach (flags_var_to_scrub
-            CMAKE_CXX_FLAGS_RELEASE
-            CMAKE_CXX_FLAGS_RELWITHDEBINFO
-            CMAKE_CXX_FLAGS_MINSIZEREL
-            CMAKE_C_FLAGS_RELEASE
-            CMAKE_C_FLAGS_RELWITHDEBINFO
-            CMAKE_C_FLAGS_MINSIZEREL)
-        string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
-            "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
-        endforeach()
-    endif()
+  add_definitions( -D_DEBUG )
+  # On non-Debug builds cmake automatically defines NDEBUG, so we
+  # explicitly undefine it:
+  if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
+    add_definitions( -UNDEBUG )
+    # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
+    foreach (flags_var_to_scrub
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_CXX_FLAGS_MINSIZEREL
+        CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_RELWITHDEBINFO
+        CMAKE_C_FLAGS_MINSIZEREL)
+      string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+        "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+    endforeach()
+  endif()
 endif(TEMPLATE_TOOLS_ENABLE_ASSERTIONS)
 
 split_list(CMAKE_CXX_FLAGS)
@@ -62,7 +62,7 @@ configure_out_of_tree_llvm()
 
 include(FindPythonInterp)
 if (NOT PYTHONINTERP_FOUND)
-    message(FATAL_ERROR "Failed to find python interpreter.")
+  message(FATAL_ERROR "Failed to find python interpreter.")
 endif()
 
 add_subdirectory(deps/fmt)
